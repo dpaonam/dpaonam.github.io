@@ -11,7 +11,7 @@
     {
       "kind": "main",
       "tag": "com-alphaoak-sigma-kpiprimary",
-      "url": "https://dpaonam.github.io/SigmaKpiPrimary.js",
+      "url": "/SigmaKpiPrimary.js",
       "integrity": "sha256-Wv5LICFxOi1/n4d/7VIEN1FHQTKSydMtirTRMMkMzI0=",
       "ignoreIntegrity": false
     }
