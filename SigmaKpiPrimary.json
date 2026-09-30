@@ -1,0 +1,187 @@
+{
+  "eula": "",
+  "vendor": "AlphaOak",
+  "license": "",
+  "id": "com.alphaoak.sigma.kpiprimary",
+  "version": "1.0.0",
+  "name": "Sigma Primary KPI Tiles",
+  "newInstancePrefix": "SigmaKpiPrimary",
+  "description": "Primary KPI tiles from the Sigma Operational Performance page: KPI score, contribution, impact and a 90-day trend line per KPI. Click a tile to select the measure.",
+  "webcomponents": [
+    {
+      "kind": "main",
+      "tag": "com-alphaoak-sigma-kpiprimary",
+      "url": "https://dpaonam.github.io/SigmaKpiPrimary.js",
+      "integrity": "sha256-Wv5LICFxOi1/n4d/7VIEN1FHQTKSydMtirTRMMkMzI0=",
+      "ignoreIntegrity": false
+    }
+  ],
+  "properties": {
+    "width": {
+      "type": "integer",
+      "default": 1200
+    },
+    "height": {
+      "type": "integer",
+      "default": 190
+    },
+    "title": {
+      "type": "string",
+      "default": "Primary KPIs",
+      "description": "Heading above the tiles"
+    },
+    "target": {
+      "type": "number",
+      "default": 80,
+      "description": "Overall target used for contribution and the dashed line"
+    },
+    "weights": {
+      "type": "string",
+      "default": "Safety:22,Productivity:16,Cost Effectiveness:16,Schedule Adherence:13,Quality:12,Customer Satisfaction:11,Human Performance:10",
+      "description": "KPI weights as Name:weight pairs (names as in KPI_Primary)"
+    },
+    "kpiOrder": {
+      "type": "string",
+      "default": "Safety,Productivity,Cost Effectiveness,Schedule Adherence,Quality,Customer Satisfaction,Human Performance",
+      "description": "Tile order"
+    },
+    "excludeKpis": {
+      "type": "string",
+      "default": "Overall Performance",
+      "description": "KPI members not shown as tiles"
+    },
+    "trendDays": {
+      "type": "integer",
+      "default": 90,
+      "description": "Days kept in the trend line, counted back from the latest date"
+    },
+    "showTarget": {
+      "type": "boolean",
+      "default": true,
+      "description": "Show the dashed target line in the trend"
+    },
+    "decimals": {
+      "type": "integer",
+      "default": 0,
+      "description": "Decimals for the KPI score"
+    },
+    "theme": {
+      "type": "string",
+      "default": "light",
+      "description": "light or dark"
+    },
+    "selectedKpi": {
+      "type": "string",
+      "default": "",
+      "description": "Selected KPI (set by clicking a tile)"
+    }
+  },
+  "methods": {
+    "getSelectedKpi": {
+      "description": "KPI_Primary member of the selected tile, empty when none",
+      "returnType": "string",
+      "body": "return this.selectedKpi;"
+    },
+    "setSelectedKpi": {
+      "description": "Select a tile by KPI name, empty string to clear",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "string",
+          "description": "Select a tile by KPI name, empty string to clear"
+        }
+      ],
+      "body": "this.selectedKpi = value;"
+    },
+    "setTarget": {
+      "description": "Set the target",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "number",
+          "description": "Set the target"
+        }
+      ],
+      "body": "this.target = value;"
+    },
+    "setWeights": {
+      "description": "Set weights, e.g. Safety:22,Productivity:16",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "string",
+          "description": "Set weights, e.g. Safety:22,Productivity:16"
+        }
+      ],
+      "body": "this.weights = value;"
+    },
+    "setTrendDays": {
+      "description": "Days kept in the trend line",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "integer",
+          "description": "Days kept in the trend line"
+        }
+      ],
+      "body": "this.trendDays = value;"
+    },
+    "setTitle": {
+      "description": "Set the heading",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "string",
+          "description": "Set the heading"
+        }
+      ],
+      "body": "this.title = value;"
+    },
+    "setTheme": {
+      "description": "light or dark",
+      "parameters": [
+        {
+          "name": "value",
+          "type": "string",
+          "description": "light or dark"
+        }
+      ],
+      "body": "this.theme = value;"
+    }
+  },
+  "events": {
+    "onSelect": {
+      "description": "A tile was clicked (read the KPI with getSelectedKpi)"
+    }
+  },
+  "dataBindings": {
+    "kpiBinding": {
+      "feeds": [
+        {
+          "id": "dimensions",
+          "description": "KPI_Primary, then optional Impact",
+          "type": "dimension"
+        },
+        {
+          "id": "measures",
+          "description": "Score, then optional Contribution",
+          "type": "mainStructureMember"
+        }
+      ]
+    },
+    "trendBinding": {
+      "feeds": [
+        {
+          "id": "dimensions",
+          "description": "KPI_Primary, then Date (day or week, last 90 days)",
+          "type": "dimension"
+        },
+        {
+          "id": "measures",
+          "description": "Score",
+          "type": "mainStructureMember"
+        }
+      ]
+    }
+  }
+}
