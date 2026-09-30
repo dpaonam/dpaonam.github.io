@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAC Gantt Chart Widget Guide</title>
+<meta name="description" content="Implementation guide for the UI5 Gantt Chart custom widget in SAP Analytics Cloud.">
+<style>
+:root{
+  --bg:#ffffff; --surface:#f6f8fa; --text:#1f2328; --muted:#59636e; --border:#d1d9e0;
+  --accent:#1f4e79; --accent2:#2e75b6; --code-bg:#f2f4f7; --code-text:#8b1a1a;
+  --note-bg:#fff8e1; --note-border:#c9a227; --th-bg:#1f4e79; --th-text:#ffffff;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#0d1117; --surface:#161b22; --text:#e6edf3; --muted:#9198a1; --border:#30363d;
+    --accent:#6cb6ff; --accent2:#8ecbff; --code-bg:#1c2128; --code-text:#ffa198;
+    --note-bg:#2b2410; --note-border:#d4a72c; --th-bg:#1f3a5a; --th-text:#e6edf3;
+  }
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Calibri,Roboto,Helvetica,Arial,sans-serif}
+.layout{display:grid;grid-template-columns:260px minmax(0,1fr);max-width:1180px;margin:0 auto}
+nav{position:sticky;top:0;height:100vh;overflow:auto;padding:28px 20px;border-right:1px solid var(--border)}
+nav h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 10px}
+nav a{display:block;color:var(--text);text-decoration:none;padding:5px 8px;border-radius:6px;font-size:14px}
+nav a:hover{background:var(--surface);color:var(--accent)}
+main{padding:32px 40px 80px;min-width:0}
+header{border-bottom:3px solid var(--accent);padding-bottom:18px;margin-bottom:28px}
+header h1{margin:0;color:var(--accent);font-size:2.1rem;line-height:1.2}
+header p{margin:6px 0 0;color:var(--muted)}
+.meta{font-size:14px;color:var(--muted);margin-top:12px}
+h2{color:var(--accent);font-size:1.5rem;margin:44px 0 12px;padding-top:8px;scroll-margin-top:16px}
+h3{color:var(--accent2);font-size:1.15rem;margin:26px 0 8px}
+a{color:var(--accent)}
+code{font-family:Consolas,"SFMono-Regular",Menlo,monospace;font-size:.88em;background:var(--code-bg);
+  color:var(--code-text);padding:1px 5px;border-radius:4px;overflow-wrap:anywhere}
+pre{position:relative;background:var(--code-bg);border:1px solid var(--border);border-radius:8px;
+  padding:14px 16px;overflow:auto;font-size:14px;line-height:1.5}
+pre code{background:none;color:var(--text);padding:0;font-size:inherit}
+.copy{position:absolute;top:8px;right:8px;font:12px/1 inherit;padding:5px 9px;border-radius:6px;
+  border:1px solid var(--border);background:var(--bg);color:var(--muted);cursor:pointer}
+.copy:hover{color:var(--accent)}
+.note{background:var(--note-bg);border-left:4px solid var(--note-border);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0}
+.flow span{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:14px}
+.flow b{color:var(--muted)}
+.table-wrap{overflow-x:auto;margin:14px 0;border:1px solid var(--border);border-radius:8px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th{background:var(--th-bg);color:var(--th-text);text-align:left;padding:8px 10px;white-space:nowrap}
+td{padding:7px 10px;border-top:1px solid var(--border);vertical-align:top}
+tr:nth-child(even) td{background:var(--surface)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:6px;border:1px solid rgba(0,0,0,.15)}
+td.nowrap{white-space:nowrap}
+footer{margin-top:60px;padding-top:16px;border-top:1px solid var(--border);color:var(--muted);font-size:13px}
+@media (max-width:860px){
+  .layout{display:block}
+  nav{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border);padding:16px}
+  nav .links{display:flex;flex-wrap:wrap;gap:4px}
+  main{padding:24px 16px 60px}
+  header h1{font-size:1.6rem}
+}
+@media print{nav,.copy{display:none}.layout{display:block}main{padding:0}}
+</style>
+</head>
+<body>
+<div class="layout">
+<nav aria-label="Contents">
+  <h2>Contents</h2>
+  <div class="links">
+    <a href="#overview">1. Overview</a>
+    <a href="#prereq">2. Prerequisites</a>
+    <a href="#data">3. Data preparation</a>
+    <a href="#import">4. Import the widget</a>
+    <a href="#model">5. Create the model</a>
+    <a href="#table">6. Add the table</a>
+    <a href="#widget">7. Configure the widget</a>
+    <a href="#script">8. Scripting</a>
+    <a href="#dates">9. Date display format</a>
+    <a href="#trouble">10. Troubleshooting</a>
+    <a href="#appendix">Appendix: sample data</a>
+  </div>
+</nav>
+
+<main>
+<header>
+  <h1>Gantt Chart Custom Widget</h1>
+  <p>Implementation guide for SAP Analytics Cloud (SAC)</p>
+  <div class="meta">Prepared by Daya Paonam, AlphaOak · September 30, 2026 · Reference:
+    <a href="https://community.sap.com/t5/technology-blog-posts-by-sap/introducing-the-gantt-chart-custom-widget-for-sap-analytics-cloud/ba-p/14055045">SAP Community blog – Introducing the Gantt Chart Custom Widget for SAC</a></div>
+</header>
+
+<section id="overview">
+<h2>1. Overview</h2>
+<p>This guide describes how to build a Gantt chart in SAP Analytics Cloud using the UI5 Gantt Chart custom widget. The widget does not bind to a model directly. Instead, a standard SAC table reads the data, and a script passes the table's result set to the widget with <code>setDataSet()</code>.</p>
+<div class="flow">
+  <span>Excel file</span><b>→</b><span>SAC model</span><b>→</b><span><code>Table_Tasks</code></span><b>→</b><span>Script: <code>getResultSet()</code></span><b>→</b><span><code>GanttChart_1.setDataSet()</code></span>
+</div>
+<div class="note"><strong>Important:</strong> the widget only shows data when the story is run (View mode). It stays empty in Edit mode.</div>
+</section>
+
+<section id="prereq">
+<h2>2. Prerequisites</h2>
+<ul>
+  <li>A story using the <strong>Optimized Design Experience</strong> (classic stories don't support scripting). Convert an existing story with <strong>File → Convert to Optimized Design Experience</strong>.</li>
+  <li><strong>Advanced Mode</strong> switched on in the story editor (toggle on the right of the top toolbar).</li>
+  <li>A SAC role that allows creating custom widgets, models and scripted stories.</li>
+  <li>The widget files <code>UI5GanttChart.json</code> and <code>UI5GanttChart.zip</code>, downloaded from the GitHub link in the SAP blog.</li>
+</ul>
+</section>
+
+<section id="data">
+<h2>3. Data preparation</h2>
+<h3>3.1 Source file structure</h3>
+<p>The source file is <strong>GanttChart_Sample_table_populated.xlsx</strong>. Each row is one bar. Segment rows are parents; task rows point to their segment through ParentID.</p>
+<div class="table-wrap"><table>
+<tr><th>Column</th><th>Purpose</th><th>Example</th></tr>
+<tr><td>Order</td><td>Unique ID of the bar (widget Event ID)</td><td>1002</td></tr>
+<tr><td>Name</td><td>Text shown on the bar / left panel</td><td>Remove 1.1</td></tr>
+<tr><td>Description</td><td>Tooltip text</td><td>Remove Trench</td></tr>
+<tr><td>StartDateTime</td><td>Bar start, text in <code>yyyy-MM-dd HH:mm:ss</code></td><td class="nowrap">2026-10-05 08:00:00</td></tr>
+<tr><td>EndDateTime</td><td>Bar end, same format</td><td class="nowrap">2026-10-05 16:00:00</td></tr>
+<tr><td>ParentID</td><td>Order of the parent row; empty for segments</td><td>1001</td></tr>
+<tr><td>Color</td><td>Bar colour as hex code</td><td><span class="sw" style="background:#C0392B"></span>#C0392B</td></tr>
+<tr><td>Dummy</td><td>Measure (always 1); SAC tables need one</td><td>1</td></tr>
+</table></div>
+
+<h3>3.2 Scheduling assumptions</h3>
+<ul>
+  <li>Working hours 08:00–16:00, Monday to Friday; weekends skipped.</li>
+  <li>Tasks run in sequence: each starts when the previous one ends.</li>
+  <li>Segment 1: Oct 5 – Oct 14, 2026. Segment 2: Oct 19 – Oct 28, 2026.</li>
+  <li>A segment row runs from its first task's start to its last task's end.</li>
+</ul>
+<div class="note">These dates are a sample schedule. Replace them with real planned dates before going live.</div>
+
+<h3>3.3 Colour scheme</h3>
+<ul>
+  <li>Segment rows: dark colours (<span class="sw" style="background:#34495E"></span>Segment 1 #34495E, <span class="sw" style="background:#6C3483"></span>Segment 2 #6C3483).</li>
+  <li>Remove tasks: red → yellow. Install tasks: green → blue.</li>
+  <li>The same task uses the same colour in both segments, so they are easy to compare.</li>
+</ul>
+</section>
+
+<section id="import">
+<h2>4. Import the custom widget</h2>
+<ol>
+  <li>Go to <strong>Stories → Custom Widgets</strong> and click <strong>Create</strong>.</li>
+  <li>Upload <code>UI5GanttChart.json</code>.</li>
+  <li>Click <strong>Select File</strong> and upload <code>UI5GanttChart.zip</code>.</li>
+  <li>Save. The widget is now available under <strong>Insert → Custom Widgets</strong> in stories.</li>
+</ol>
+</section>
+
+<section id="model">
+<h2>5. Create the model</h2>
+<p>Import the Excel file into a new model and set the column types:</p>
+<div class="table-wrap"><table>
+<tr><th>Column</th><th>Model type</th></tr>
+<tr><td>Order</td><td>Dimension (unique ID)</td></tr>
+<tr><td>Name, Description</td><td>Dimension</td></tr>
+<tr><td>StartDateTime, EndDateTime</td><td>Generic dimension kept as text (not a Date dimension, which drops the time part)</td></tr>
+<tr><td>ParentID</td><td>Dimension</td></tr>
+<tr><td>Color</td><td>Dimension</td></tr>
+<tr><td>Dummy</td><td>Measure</td></tr>
+</table></div>
+<div class="note">The blog's example date format is <code>2025-01-01 08:00:00.0000000</code>. The format <code>2026-10-05 08:00:00</code> worked in this setup; if bars ever fail to appear, try adding <code>.0000000</code> to the dates.</div>
+</section>
+
+<section id="table">
+<h2>6. Add the table (Table_Tasks)</h2>
+<ol>
+  <li>Insert a table on the page based on the new model.</li>
+  <li>Rename it to <code>Table_Tasks</code>.</li>
+  <li>Put all dimensions in <strong>Rows</strong>: Order, Name, Description, StartDateTime, EndDateTime, ParentID, Color.</li>
+  <li>Put <strong>Dummy</strong> in <strong>Columns</strong>.</li>
+  <li>Show dimensions flat: no hierarchy, no totals.</li>
+  <li>Optionally hide the table once the chart works; the widget still reads its data.</li>
+</ol>
+</section>
+
+<section id="widget">
+<h2>7. Configure the Gantt widget (GanttChart_1)</h2>
+<p>Insert the widget from <strong>Insert → Custom Widgets</strong> and keep the name <code>GanttChart_1</code>.</p>
+
+<h3>7.1 Dataset parsing (Builder panel)</h3>
+<div class="table-wrap"><table>
+<tr><th>Widget field</th><th>Mapping</th></tr>
+<tr><td>Event ID</td><td><code>Order.id</code></td></tr>
+<tr><td>Event Name</td><td><code>Name.id</code></td></tr>
+<tr><td>Event Description</td><td><code>Description.id</code></td></tr>
+<tr><td>Event Start Time</td><td><code>StartDateTime.id</code></td></tr>
+<tr><td>Event End Time</td><td><code>EndDateTime.id</code></td></tr>
+<tr><td>Parent ID</td><td><code>ParentID.id</code></td></tr>
+<tr><td>Color of Event Bar</td><td><code>Color.id</code></td></tr>
+</table></div>
+<p>Field names must match the result set exactly, including capitals. If SAC renamed a dimension on import (for example <code>Start_Date_Time</code>), use that name.</p>
+
+<h3>7.2 Table columns (left panel)</h3>
+<p>Use <code>.description</code> for the dates so the left panel shows SAC's formatted value (e.g. <code>Oct 5, 2026 8:00:00</code>), while the bars keep using <code>.id</code>.</p>
+<pre><code>[
+  {"field": "Name", "label": "Task"},
+  {"field": "Description", "label": "Description"},
+  {"field": "StartDateTime.description", "label": "Start"},
+  {"field": "EndDateTime.description", "label": "End"}
+]</code></pre>
+
+<h3>7.3 Horizon settings</h3>
+<p>With the default <strong>Dynamic Total Horizon</strong>, the chart starts at today and only looks a short time ahead, so future bars can be hidden. Choose one of these:</p>
+<ul>
+  <li><strong>Option A (recommended): Fixed Total Horizon.</strong> Start <code>2026-10-01 00:00:00</code>, End <code>2026-11-01 00:00:00</code>.</li>
+  <li><strong>Option B: Dynamic Total Horizon</strong> with Look Forward <code>64800</code> minutes (45 days) and Look Back <code>1440</code> (1 day).</li>
+</ul>
+<p>In both cases, tick <strong>Dynamic Visual Horizon</strong> so the view zooms to fit all the bars.</p>
+
+<h3>7.4 Other settings</h3>
+<ul>
+  <li><strong>Dataset Timezone Offset from UTC:</strong> <code>0</code> to start with. Change it only if bars are shifted by hours.</li>
+  <li><strong>Apply Same Color for All Bars:</strong> leave empty, or it overrides the hex colours.</li>
+  <li><strong>Automatic Text Color:</strong> on (white/black chosen per bar).</li>
+  <li><strong>Bars Opacity:</strong> above 0; 0.8 is the default.</li>
+</ul>
+</section>
+
+<section id="script">
+<h2>8. Scripting</h2>
+<h3>8.1 Where scripts live</h3>
+<ul>
+  <li>With <strong>Advanced Mode</strong> on, hover over a widget in the <strong>Outline</strong> and click the <strong>fx</strong> icon, or use the widget's <strong>⋯ → Edit Scripts</strong> menu.</li>
+  <li>For load-time scripts, the top node in the Outline (story name, <strong>Story</strong> or <strong>Application</strong>; <strong>Canvas</strong> in older analytic applications) has <strong>onInitialization</strong>. Names vary by SAC release.</li>
+</ul>
+
+<h3>8.2 Table_Tasks → onResultChanged</h3>
+<p>Runs whenever the table's data changes (including filters):</p>
+<pre><code>var rs = Table_Tasks.getDataSource().getResultSet();
+console.log(rs);   // optional: inspect in browser console (F12)
+GanttChart_1.setDataSet(rs);</code></pre>
+
+<h3>8.3 Load trigger (working setup: button)</h3>
+<p>In this implementation, the onInitialization entry could not be located, so a button was used to load the chart. This was confirmed to work.</p>
+<ol>
+  <li>Insert a <strong>Button</strong> and name it <code>Btn_Load</code> (label e.g. "Load Gantt").</li>
+  <li>Click its <strong>fx</strong> icon and choose <strong>onClick</strong>.</li>
+  <li>Paste the same script as in 8.2.</li>
+  <li>Run the story and click the button.</li>
+</ol>
+<p>If onInitialization becomes available later, paste the same script there so the chart loads without a click.</p>
+</section>
+
+<section id="dates">
+<h2>9. Date display format</h2>
+<p>SAC can display the date as <code>Oct 5, 2026 8:00:00</code> when the dimension display mode is set to <strong>Description</strong>. The result set passes both values to the widget:</p>
+<pre><code>StartDateTime: { id: "2026-10-05 08:00:00", description: "Oct 5, 2026 8:00:00" }</code></pre>
+<ul>
+  <li>Bars use <code>.id</code> (machine-readable).</li>
+  <li>Left-panel columns use <code>.description</code> (formatted), as in section 7.2.</li>
+</ul>
+<div class="note"><strong>Check:</strong> open the console after loading and expand one row. If <code>description</code> repeats the <code>id</code> value, SAC is not formatting it for the widget. The fallback is to add display columns (StartDateTime_Desc, EndDateTime_Desc) and map them as the dimensions' descriptions (file <em>GanttChart_Sample_table_v2.xlsx</em>).</div>
+</section>
+
+<section id="trouble">
+<h2>10. Troubleshooting</h2>
+<div class="table-wrap"><table>
+<tr><th>Symptom</th><th>Likely cause / fix</th></tr>
+<tr><td>No script (fx) icon</td><td>Story is classic or Advanced Mode is off. Convert to Optimized Design Experience and switch on Advanced Mode; check role privileges.</td></tr>
+<tr><td>Widget empty</td><td>Story is in Edit mode. Run it (View mode).</td></tr>
+<tr><td>Left panel shows data but no bars</td><td>Horizon excludes the dates. Use Fixed Total Horizon or increase Look Forward (section 7.3).</td></tr>
+<tr><td>Chart starts at today, not October</td><td>Same cause: Dynamic Total Horizon. See section 7.3.</td></tr>
+<tr><td>Nothing printed in console</td><td>Script not firing. Check it is saved under the right event, or use the button.</td></tr>
+<tr><td>"Rows: 0" / empty result set</td><td>Table filters, or dimensions not in Rows / measure missing.</td></tr>
+<tr><td>Segments or all bars missing</td><td>Empty ParentID may become "#" (Unassigned). Clear the Parent ID mapping to test; keep ParentID blank for segment rows.</td></tr>
+<tr><td>Dates show as 20261005 or without time</td><td>Columns imported as Date type. Re-import as generic text dimensions.</td></tr>
+<tr><td>Bars shifted by hours</td><td>Set Dataset Timezone Offset from UTC.</td></tr>
+<tr><td>All bars one colour</td><td>Apply Same Color for All Bars is set. Clear it.</td></tr>
+</table></div>
+<h3>Diagnostic script</h3>
+<pre><code>var rs = Table_Tasks.getDataSource().getResultSet();
+console.log("Rows: " + rs.length);
+console.log(rs[0]);   // shows the exact field names SAC uses
+GanttChart_1.setDataSet(rs);</code></pre>
+</section>
+
+<section id="appendix">
+<h2>Appendix: sample data set</h2>
+<p>Dummy = 1 on every row (not shown).</p>
+<div class="table-wrap"><table id="sample">
+<tr><th>Order</th><th>Name</th><th>Description</th><th>Start</th><th>End</th><th>Parent</th><th>Color</th></tr>
+</table></div>
+</section>
+
+<footer>SAC Gantt Chart Widget – Implementation Guide · AlphaOak</footer>
+</main>
+</div>
+
+<script>
+// Sample data rows
+const rows = [
+ [1001,'Segment1','Segment 1 replacement','2026-10-05 08:00:00','2026-10-14 16:00:00','','#34495E'],
+ [1002,'Remove 1.1','Remove Trench','2026-10-05 08:00:00','2026-10-05 16:00:00',1001,'#C0392B'],
+ [1003,'Remove 1.2','Remove Valve','2026-10-06 08:00:00','2026-10-06 12:00:00',1001,'#E74C3C'],
+ [1004,'Remove 1.3','Remove Welding','2026-10-06 12:00:00','2026-10-06 16:00:00',1001,'#E67E22'],
+ [1005,'Remove 1.4','Remove Tee','2026-10-07 08:00:00','2026-10-07 12:00:00',1001,'#F39C12'],
+ [1006,'Remove 1.5','Remove Pipe','2026-10-07 12:00:00','2026-10-08 12:00:00',1001,'#F1C40F'],
+ [1007,'Install 1.1','Install Pipe','2026-10-08 12:00:00','2026-10-09 16:00:00',1001,'#1E8449'],
+ [1008,'Install 1.2','Install Tee','2026-10-12 08:00:00','2026-10-12 12:00:00',1001,'#27AE60'],
+ [1009,'Install 1.3','Install Valve','2026-10-12 12:00:00','2026-10-12 16:00:00',1001,'#2ECC71'],
+ [1010,'Install 1.4','Install Welding','2026-10-13 08:00:00','2026-10-13 16:00:00',1001,'#2E86C1'],
+ [1011,'Install 1.5','Install Trench','2026-10-14 08:00:00','2026-10-14 16:00:00',1001,'#5DADE2'],
+ [1012,'Segment2','Segment 2 replacement','2026-10-19 08:00:00','2026-10-28 16:00:00','','#6C3483'],
+ [1013,'Remove 2.1','Remove Trench','2026-10-19 08:00:00','2026-10-19 16:00:00',1012,'#C0392B'],
+ [1014,'Remove 2.2','Remove Valve','2026-10-20 08:00:00','2026-10-20 12:00:00',1012,'#E74C3C'],
+ [1015,'Remove 2.3','Remove Welding','2026-10-20 12:00:00','2026-10-20 16:00:00',1012,'#E67E22'],
+ [1016,'Remove 2.4','Remove Tee','2026-10-21 08:00:00','2026-10-21 12:00:00',1012,'#F39C12'],
+ [1017,'Remove 2.5','Remove Pipe','2026-10-21 12:00:00','2026-10-22 12:00:00',1012,'#F1C40F'],
+ [1018,'Install 2.1','Install Pipe','2026-10-22 12:00:00','2026-10-23 16:00:00',1012,'#1E8449'],
+ [1019,'Install 2.2','Install Tee','2026-10-26 08:00:00','2026-10-26 12:00:00',1012,'#27AE60'],
+ [1020,'Install 2.3','Install Valve','2026-10-26 12:00:00','2026-10-26 16:00:00',1012,'#2ECC71'],
+ [1021,'Install 2.4','Install Welding','2026-10-27 08:00:00','2026-10-27 16:00:00',1012,'#2E86C1'],
+ [1022,'Install 2.5','Install Trench','2026-10-28 08:00:00','2026-10-28 16:00:00',1012,'#5DADE2']
+];
+const t = document.getElementById('sample');
+rows.forEach(r => {
+  const tr = document.createElement('tr');
+  r.forEach((v, i) => {
+    const td = document.createElement('td');
+    if (i === 3 || i === 4 || i === 1) td.className = 'nowrap';
+    if (i === 6) td.innerHTML = '<span class="sw" style="background:' + v + '"></span>' + v;
+    else td.textContent = v;
+    if (i === 1 && String(v).startsWith('Segment')) td.style.fontWeight = '600';
+    tr.appendChild(td);
+  });
+  t.appendChild(tr);
+});
+
+// Copy buttons on code blocks
+document.querySelectorAll('pre').forEach(pre => {
+  const b = document.createElement('button');
+  b.className = 'copy'; b.type = 'button'; b.textContent = 'Copy';
+  b.addEventListener('click', () => {
+    const txt = pre.querySelector('code').innerText;
+    const done = () => { b.textContent = 'Copied'; setTimeout(() => b.textContent = 'Copy', 1500); };
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(done).catch(() => {});
+  });
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>
