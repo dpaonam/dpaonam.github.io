@@ -3,7 +3,7 @@
   "vendor": "AlphaOak",
   "license": "",
   "id": "com.alphaoak.sigma.kpiprimary",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "name": "Sigma Primary KPI Tiles",
   "newInstancePrefix": "SigmaKpiPrimary",
   "description": "Primary KPI tiles from the Sigma Operational Performance page: KPI score, contribution, impact and a 90-day trend line per KPI. Click a tile to select the measure.",
@@ -12,8 +12,8 @@
       "kind": "main",
       "tag": "com-alphaoak-sigma-kpiprimary",
       "url": "/SigmaKpiPrimary.js",
-      "integrity": "sha256-Wv5LICFxOi1/n4d/7VIEN1FHQTKSydMtirTRMMkMzI0=",
-      "ignoreIntegrity": false
+      "integrity": "",
+      "ignoreIntegrity": true
     }
   ],
   "properties": {
